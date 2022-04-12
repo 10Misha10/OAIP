@@ -1,0 +1,354 @@
+#include <iostream>
+#include <conio.h>
+#include <string>
+
+using namespace std;
+struct Tree {
+	int key;
+	string info;
+	Tree* left, * right;
+};
+int input(const char* msg) {
+	int toReturn = 0;
+	cout << msg << " ";
+	while (!(cin >> toReturn) || cin.get() != '\n') {
+		cin.clear();
+		while (cin.get() != '\n');
+		cout << "\nНеправильный ввод!\n Попробуйте еще раз: ";
+	}
+	return toReturn;
+}
+int input_without_0(const char* msg) {
+	int toReturn = 0;
+	cout << msg << " ";
+	while (toReturn < 1) {
+		while (!(cin >> toReturn) || cin.get() != '\n') {
+			cin.clear();
+			while (cin.get() != '\n');
+			cout << "\nНеправильный ввод!\n Попробуйте еще раз: ";
+		}
+		if (toReturn <= 0) {
+			cout << "\nЗначение должно быть больше нуля!\nПопробуйте еще раз: ";
+		}
+	}
+	return toReturn;
+}
+Tree* List(int i, string info) {
+	Tree* t = new Tree;
+	t->key = i;
+	t->info = info;
+	t->left = t->right = NULL;
+	return t;
+}
+Tree* Create(Tree* root) {
+	Tree* Prev = NULL, * t;
+	int  N, b, find;
+	string info;
+	N = input_without_0("N = ");
+	if (!root) {
+		N--;  
+		b = input("Input Root : ");
+		cout << " Input info root :  ";
+		cin >> info;
+		root = List(b, info);
+	}
+	for (int i = 1; i <= N; ++i) {
+		b = input("Input key :  ");
+		cout << " Input info :  ";
+		cin >> info;
+		t = root;
+		find = 0;
+		while (t && !find) {
+			Prev = t;
+			if (b == t->key) {
+				find = 1;
+				cout << "Такой уже есть!" << endl;
+			}
+			else {
+				if (b < t->key) { t = t->left; }
+				else { t = t->right; }
+			}
+		}
+		if (!find) {
+			t = List(b, info);
+			if (b < Prev->key) { Prev->left = t; }
+			else { Prev->right = t; }
+		}
+	}
+	return root;
+}
+void Add_List(Tree* root) {
+	Tree* prev = NULL, * t;
+	int find = 1, b;
+	string info;
+	t = root;
+	b = input("Input key :  ");
+	cout << " Input info :  ";
+	cin >> info;
+	while (t && find) {
+		prev = t;
+		if (b == t->key) {
+			find = 0;
+			cout << " Такой уже есть !" << endl;
+		}
+		else {
+			if (b < t->key) { t = t->left; }
+			else { t = t->right; }
+		}
+	}
+	if (find) {
+		t = List(b, info);
+		if (b < prev->key) { prev->left = t; }
+		else { prev->right = t; }
+	}
+}
+Tree* Del(Tree* root, int key) {
+	Tree* Del, * Prev_Del = NULL, * R, * Prev_R;
+	Del = root;
+	while (Del != NULL && Del->key != key) {
+		Prev_Del = Del;
+		if (Del->key > key) { Del = Del->left; }
+		else { Del = Del->right; }
+	}
+	if (Del == NULL) {
+		cout << "\nЭлемента с таким ключом нет!" << endl;
+		return root;
+	}
+	if (Del->right == NULL) { R = Del->left; }
+	else {
+		if (Del->left == NULL) { R = Del->right; }
+		else {
+			Prev_R = Del;
+			R = Del->left;
+			while (R->right != NULL) {
+				Prev_R = R;
+				R = R->right;
+			}
+			if (Prev_R == Del) { R->right = Del->right; }
+			else {
+				R->right = Del->right;
+				Prev_R->right = R->left;
+				R->left = Prev_R;
+			}
+		}
+	}
+	if (Del == root) { root = R; }
+	else {
+		if (Del->key < Prev_Del->key) { Prev_Del->left = R; }
+		else {Prev_Del->right = R;}
+		cout << " Delete " << Del->key << endl;
+		delete Del;
+	}
+	return root;
+}
+void View(Tree* t, int level, int info_root) {
+	if (t) {
+		View(t->right, level + 1, info_root);
+		for (int i = 0; i < level; ++i) {
+			cout << "    ";
+		}
+		if (t->key != info_root) {
+			cout << "|" << t->key << "|" << endl;
+		}
+		else {
+			cout << t->key << "-|" << endl;
+		}
+		View(t->left, level + 1, info_root);
+	}
+}
+int NodeCount(Tree* p){
+	if (p == NULL) { return 0; }
+	return NodeCount(p->right) + NodeCount(p->left) + 1;
+}
+void addToArray(Tree* root, Tree**& a, int &idx) {
+	a[idx] = root;
+	idx++;
+	if (root->left)  addToArray(root->left, a, idx);
+	if (root->right) addToArray(root->right, a, idx);
+}
+int Find_Level(Tree* root){
+	if (!root){
+		return 0;
+	}
+	return max(Find_Level(root->left), Find_Level(root->right)) + 1;
+}
+void Del_All(Tree* t) {
+	if (t) {
+		Del_All(t->left);
+		Del_All(t->right);
+		delete t;
+	}
+}
+void Make_Blns(Tree** p, int n, int k, Tree** a) {
+	if (n == k) {
+		*p = NULL;
+		return;
+	}
+	else {
+		int m = (n + k) / 2;
+		*p = new Tree;
+		*p = a[m];
+		Make_Blns(&(*p)->left, n, m, a);
+		Make_Blns(&(*p)->right, m + 1, k, a);
+	}
+}
+string GetInfo(Tree* root, int key){
+	if (key == root->key){
+		return root->info;
+	}
+	if (key > root->key){
+		if (root->right){
+			return GetInfo(root->right, key);
+		}
+		return "Элемент с таким ключом не найден!";
+	}
+	else{
+		if (root->left){
+			return GetInfo(root->left, key);
+		}
+		return "Элемент с таким ключом не найден!";
+	}
+}
+
+void pre_bypass(Tree* root) {
+	if (root) {
+		cout << root->info << " ";
+		pre_bypass(root->left);
+		pre_bypass(root->right);
+	}
+}
+void increase_bypass(Tree* root) {
+	if (root) {
+		increase_bypass(root->left);
+		cout << root->info << " ";
+		increase_bypass(root->right);
+	}
+}
+void post_bypass(Tree* root) {
+	if (root) {
+		post_bypass(root->left);
+		post_bypass(root->right);
+		cout << root->info << " ";
+	}
+}
+void Oun_Task(Tree* root, string sumbol, int &n) {
+	if (root) {
+		Oun_Task(root->left, sumbol,  n);
+		Oun_Task(root->right, sumbol, n);
+		if (sumbol[0] == root->info[0]) { 
+			n++;
+			cout << "Info: " << root->info << "   key: " << root->key << endl;
+		}
+	}
+}
+void Oun_Task2(Tree* root, int key) {
+	if (root) {
+		Oun_Task2(root->left, key);
+		Oun_Task2(root->right, key);
+		if (key == root->key) {
+			Del_All(root->left);
+			root->left = NULL;
+			Del_All(root->right);
+			root->right = NULL;
+		}
+	}
+}
+int main() {
+	setlocale(LC_ALL, "ru");
+	Tree* root = NULL;
+	int key;
+	string keyy;
+	root = Create(root);
+	while (1) {
+		int s = NodeCount(root), i = 0, ind = 0, n = 0;
+		Tree** arr = new Tree * [s];
+		Tree* buffer;
+		string sumbol;
+		if (root == NULL) {
+			cout << "Дерево удалено!\nХотите продолжить?\n1-ДА\telse-НЕТ, завершить работу." << endl;
+			switch (_getch()) {
+			case '1':
+				root = Create(root);
+				break;
+			default:
+				return 0;
+			}
+		}
+		cout << endl;
+		cout << "Выберите, что вы хотите сделать!\n1-Добавить элемент.\n2-Вывести дерево.\n3-Вывести информацию по ключу.\n4-Удалить элемент по ключу.\n5-вывести информацию.\n6-Сбалансировать дерево.\n7-Завершить работу.\n8-Удалить ветвь с ключом.\nelse-Личное задание." << endl;
+		switch (_getch()) {
+		case '1':
+			Add_List(root);
+			break;
+		case '2':
+			View(root, 0, root->key);
+			cout << "Глубина дерева: " << Find_Level(root) << endl;
+			cout << "Количество элементов: " << NodeCount(root) << endl;
+			break;
+		case '3':
+			key = input("Input key :  ");
+			cout << "Info: " << GetInfo(root, key) << endl;
+			break;
+		case '4':
+			key = input("Input key :  ");
+			root = Del(root, key);
+			break;
+		case '5':
+			cout << endl;
+			cout << "Прямым обходом:" << endl;
+			pre_bypass(root);
+			cout << endl;
+			cout << "В порядке возрастания ключа:" << endl;
+			increase_bypass(root);
+			cout << endl;
+			cout << "Обратным обходом:" << endl;
+			post_bypass(root);
+			cout << endl;
+			break;
+		case '6':
+			addToArray(root, arr, ind);
+			for (int i = 0; i < s - 1; i++) {
+				for (int j = 0; j < s - i - 1; j++) {
+					if (arr[j]->key > arr[j + 1]->key) {
+						buffer = arr[j];
+						arr[j] = arr[j + 1];
+						arr[j + 1] = buffer;
+					}
+				}
+			}
+			cout << endl;
+			Make_Blns(&root, 0, s, arr);
+			break;
+		case '7':
+			Del_All(root);
+			return 0;
+			break;
+		case '8':
+			key = input("key: ");
+			i = 0;
+			while (true) {
+				sumbol[i] = _getch();
+				if (sumbol[i] == 13) break;
+				if (i != 1) continue;
+				i++;
+			}
+			sumbol[i] = '\0';
+			Oun_Task2(root, key);
+			break;
+		default:
+			cout << "sumbol:" << endl;
+			cin >> sumbol;
+			if (size(sumbol) > 1) {
+				cout << "Вы ввели больше, чем один символ! Я использую первый." << endl;
+			}
+			Oun_Task(root, sumbol, n);
+			cout << "Количество записей, начинающихся с '" << sumbol[0] << "' : " << n << endl;
+			break;
+		}
+		/*for (i = 0; i < sizeof(arr); i++) {
+			delete arr[i];
+		}
+		delete[] arr;*/
+	}
+	return 0;
+}
