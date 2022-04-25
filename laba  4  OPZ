@@ -1,0 +1,250 @@
+#include <iostream>
+#include <conio.h>
+#include <math.h>
+
+using namespace std;
+
+double input_int() {
+	int i = 0;
+	while (!(cin >> i) || cin.get() != '\n') {
+		cin.clear();
+		while (cin.get() != '\n');
+		cout << "\nНеправильный ввод!\n Попробуйте еще раз: ";
+	}
+	return i;
+}
+struct Stack {
+	char c;
+	Stack* next;
+};
+Stack* InStack(Stack* p, char in) {
+	Stack* t = new Stack;
+	t->c = in;
+	t->next = p;
+	return t;
+}
+Stack* OutStack(Stack* p, char& out) {
+	Stack* t = p;
+	out = p->c;
+	p = p->next;
+	delete t;
+	return p;
+}
+int Len(char* str) {
+	int len = 0;
+	while (str[len] != '\0') { len++; }
+	return len;
+}
+bool isOperator(char ch) {
+	return ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '^';
+}
+bool isParenthesis(char ch) {
+	return ch == '(' || ch == ')';
+}
+bool isvariable(char ch) {
+	return ch >= 'a' && ch <= 'z';
+}
+
+void Input(char* s)
+{
+	cout << " Введите строку : ";
+	int i = 0;
+	int opening_parenthesis_count = 0;
+	int closing_parenthesis_count = 0;
+	while (true) {
+		s[i] = _getch();
+		if (s[i] == '\b' && i > 0) { 
+			if (s[i - 1] == ')') { closing_parenthesis_count--; }
+			if (s[i - 1] == '(') { opening_parenthesis_count--; }
+			cout << "\b \b";s[i] = '\0'; i--; continue;
+		}
+		if (s[i] == 13) break;
+		if (i == 79) continue;
+		if (i == 0) {
+			if (!(s[i] == '(' || isalpha(s[i]))) {
+				continue;
+			}
+		}
+		else {
+			if (!(
+				(isOperator(s[i]) && isvariable(s[i - 1])) || // variable - operator
+				(isvariable(s[i]) && isOperator(s[i - 1])) || // operator - variable
+				(s[i] == '(' && (isOperator(s[i - 1]) || s[i - 1] == '(')) ||   // operator or ( - (
+				(isOperator(s[i]) && s[i - 1] == ')') ||   // ) - op
+				(s[i] == ')' && (isvariable(s[i - 1]) || s[i - 1] == ')') && opening_parenthesis_count > closing_parenthesis_count) ||// variable or ) - )
+				(isvariable(s[i]) && s[i - 1] == '(')     // ( - variable
+				)) {
+				continue;
+			}
+		}
+		cout << s[i];
+		opening_parenthesis_count += (s[i] == '(');
+		closing_parenthesis_count += (s[i] == ')');
+		i++;
+	}
+	if (opening_parenthesis_count > closing_parenthesis_count) {
+		cout << endl;
+		cout << "Вы не звкрыли скобку, мы сделали это  за вас!" << endl;
+	}
+	s[i] = '\0';
+}
+int  Prior(char a) {
+	if (a == '^') { return 4; }
+	if (a == '*' || a == '/') { return 3; }
+	if (a == '-' || a == '+') { return 2; }
+	if (a == '(') { return 1; }
+	return 0;
+}
+char* Polish(char *In, char*& Out){
+	if (Len(In) < 3) { cout << endl; cout << "Количества введеных данных недостатоно для вычислений! Попробуйте создать новую строку. " << endl; Out[0] = '\0'; }
+	else {
+		Stack* Op = NULL;
+		char a;
+		int k, l = 0;
+		for (k = 0; In[k] != '\0'; k++) {
+			if (In[k] >= 'a' && In[k] <= 'z') {
+				Out[l++] = In[k];
+				continue;
+			}
+			if (In[k] == '(') {
+				Op = InStack(Op, In[k]);
+				continue;
+			}
+			if (In[k] == ')') {
+				while (Op && Op->c != '(') {
+					Op = OutStack(Op, a);
+					if (!Op) { a = '\0'; }
+					Out[l++] = a;
+				}
+				Op = OutStack(Op, a);
+				continue;
+			}
+			if (In[k] == '+' || In[k] == '-' || In[k] == '*' || In[k] == '/' || In[k] == '^') {
+				while (Op && (Prior(Op->c) >= Prior(In[k]))) {
+					Op = OutStack(Op, a);
+					Out[l++] = a;
+				}
+				Op = InStack(Op, In[k]);
+			}
+		}
+		while (Op) {
+			Op = OutStack(Op, a);
+			if (a != '(' && a != ')') {
+				Out[l] = a;
+				l++;
+			}
+		}
+		Out[l] = '\0';
+	}
+	return Out;
+}
+char* sorting(char* polish){
+	int k = 0, n = 0, z;
+	z = Len(polish);
+	bool flag = false;
+	char* res = new char[z];
+	res[0] = '\0';
+	for (int i = 0; i < z; i++){
+		if (polish[i] >= 'a' && polish[i] <= 'z'){
+			while( k < Len(res)){
+				if (polish[i] == res[k]){
+					flag = true;
+				}
+				k++;
+			}
+			k = 0;
+			if (!flag){
+				res[n] = polish[i];
+				res[n + 1] = '\0';
+				n++;
+			}
+			else{
+				flag = false;
+			}
+		}
+	}
+	return res;
+}
+void Result(char* str) {
+	if (Len(str) < 3) {}
+	else {
+		int  i = 0, k = 0;
+		bool nul = true;
+		Stack* begin = NULL;
+		char ss, ss1, ss2, ssR = 'z' + 1;
+		double op1, op2, res = -10, mas[50];
+		cout << " Input data:" << endl;
+		for (i = 0; sorting(str)[i] != '\0'; ++i) {
+			ss = sorting(str)[i];
+			cout << ss << " = ";
+			mas[int(ss - 'a')] = input_int();
+			while (k < Len(str)) {
+				if (str[k] == ss) {
+					mas[int(ss - 'a')] = mas[int(str[k] - 'a')];
+				}
+				k++;
+			}
+		}
+		for (i = 0; str[i] != '\0'; ++i) {
+			ss = str[i];
+			if (!(ss == '+' || ss == '-' || ss == '*' || ss == '/' || ss == '^')) {
+				begin = InStack(begin, ss);
+			}
+			else {
+				begin = OutStack(begin, ss2);
+				begin = OutStack(begin, ss1);
+				op2 = mas[int(ss2 - 'a')];
+				op1 = mas[int(ss1 - 'a')];
+				switch (ss) {
+				case '^':	res = pow(op1, op2);   break;
+				case '+': 	res = op1 + op2;   break;
+				case '-': 	res = op1 - op2;   break;
+				case '*': 	res = op1 * op2;   break;
+				case '/':
+					if (op2 == 0) { nul = false; }
+					else { res = op1 / op2; }
+					break;
+				}
+				mas[int(ssR - 'a')] = res;
+				begin = InStack(begin, ssR);
+				ssR++;
+			}
+		}
+		if (nul) {
+			cout << " Res = " << res << endl;
+		}
+		else {
+			cout << "Произошло деление на ноль!" << endl;
+		}
+	}
+}
+int main() {
+	setlocale(LC_ALL, "ru");
+	char In[81];
+	char* Out = new char[81];
+	Input(In);
+	cout << endl;
+	while (1) {
+		cout << endl;
+		cout << "Выберите, что вы хотите сделать!\n1-Создать новую строку\n2-Вывести польскую запись\n3-Посчитать выражение\nelse-завершить работу" << endl;
+		switch (_getch()) {
+		case '1':
+			Input(In);
+			break;
+		case '2':
+			Polish(In, Out);
+			if (Len(Out) < 3 ) {
+			}
+			else{ cout << "\n Polish: " << Out << endl; }
+			break;
+		case '3':
+			Polish(In, Out);
+			Result(Out);
+			break;
+		default:
+			delete[] Out;
+			return 0;
+		}
+	}
+	return 0;
+}
