@@ -1,0 +1,173 @@
+#include <iostream>
+#include <algorithm>
+#include <conio.h>
+#include <string>
+using namespace std;
+
+int input(const char* msg) {
+    int toReturn = 0;
+    cout << msg << " ";
+    while (!(cin >> toReturn) || cin.get() != '\n') {
+        cin.clear();
+        while (cin.get() != '\n');
+        cout << "\nНеправильный ввод!\n Попробуйте еще раз: ";
+    }
+    return toReturn;
+}
+double F(double x) {
+    return 4 * x - 7 * sin(x);
+}
+double Metod_Lagr(double xt, double* x, int m){
+    int  i, k;
+    double  e, yt = 0;
+    for (k = 0; k < m; k++) {
+        e = 1.;
+        for (i = 0; i < m; i++) {
+            if (i != k) {
+                e *= ((xt - x[i]) / (x[k] - x[i]));
+            }
+        }
+        yt += e * F(x[k]);
+    }
+    return yt;
+}
+double Newton(double x, int n, double* arr_x, double* arr_y){
+    double sum = arr_y[0];
+    for (int i = 1; i < n; ++i){
+        double F = 0;
+        for (int j = 0; j <= i; ++j){
+            double den = 1;
+            for (int k = 0; k <= i; ++k){
+                if (k != j){
+                    den *= (arr_x[j] - arr_x[k]);
+                }
+            }
+            F += arr_y[j] / den;
+        }
+        for (int k = 0; k < i; ++k){
+            F *= (x - arr_x[k]);
+        }
+        sum += F;
+    }
+    return sum;
+}
+void View(string x_str) {
+    int size = 12;
+    cout << "|" << x_str;
+    for (; size - x_str.size() > 0; size--)cout << " ";
+    cout << "|";
+}
+double Find_Max(double *arr,int size) {
+    double max = arr[0];
+    for (int i = 1; i < size; i++) {
+        if (arr[i] > max) {
+            max = arr[i];
+        }
+    }
+    return max;
+}
+void Start() {
+    double a, b, step, step2, buf;
+    int m, k = 0, i, iter, n, n_string;
+    string f;
+    a = input("a = ");
+    b = input("b = ");
+    if (b < a) {
+        buf = b;
+        b = a;
+        a = buf;
+    }
+    m = input("m = ");
+    while (m < 3) {
+        cout << "m должно быть больше тройки!\nПопробуйте еще раз:";
+        m = input("m = ");
+    }
+    step = (b - a) / (m - 1);
+    n = input("n = ");
+    while (n < m) {
+        cout << "n должен быть больше или равен m!\nПопробуйте еще раз:";
+        n = input("n = ");
+    }
+    step2 = (b - a) / (n - 1);
+
+    double* arr_y = new double[m + 1];
+    double* arr_x = new double[m + 1];
+    double* arr_y_t = new double[n + 1];
+    double* arr_abs_Lagr = new double[n + 1];
+    double* arr_abs_Newt = new double[n + 1];
+
+    for (double i = a; i <= b + step; i += step, k++) {
+        arr_y[k] = F(i);
+        arr_x[k] = i;
+    }
+
+    string x_str, y_str;
+    cout << "ORIGINAL\n ----X------------F(X)-- " << endl;
+    for (int i = 0; i < m; i++) {
+        double size = 12;
+        x_str = to_string(arr_x[i]);
+        y_str = to_string(arr_y[i]);
+        View(x_str); View(y_str);
+        cout << endl;
+        replace(x_str.begin(), x_str.end(), ',', '.');
+        replace(y_str.begin(), y_str.end(), ',', '.');
+        system(("echo " + x_str + " " + y_str + " >> original").c_str());
+    }
+    cout << " ------------------------- " << endl;
+    double x = a;
+    cout << "APROCSIMATE\n ----X------------F(X)---------Lafr_F(x)--|F(x) - Lagr|---Newton_F(X)--|F(x) - Newt| " << endl;
+    for (int i = 0; i < n; i++, x += step2) {
+        arr_y_t[i] = Metod_Lagr(x, arr_x, m);
+        arr_abs_Lagr[i] = abs(F(x) - arr_y_t[i]);
+        x_str = to_string(x);
+        View(x_str);
+        y_str = to_string(F(x));
+        View(y_str);
+        y_str = to_string(arr_y_t[i]);
+        View(y_str);
+        replace(x_str.begin(), x_str.end(), ',', '.');
+        replace(y_str.begin(), y_str.end(), ',', '.');
+        system(("echo " + x_str + " " + y_str + " >> interpolated_Lagr").c_str());
+        y_str = to_string(arr_abs_Lagr[i]);
+        View(y_str);
+
+        arr_y_t[i] = Newton(x, m, arr_x, arr_y);
+        arr_abs_Newt[i] = abs(F(x) - arr_y_t[i]);
+        y_str = to_string(arr_y_t[i]);
+        View(y_str);
+        replace(x_str.begin(), x_str.end(), ',', '.');
+        replace(y_str.begin(), y_str.end(), ',', '.');
+        system(("echo " + x_str + " " + y_str + " >> interpolated_Newton").c_str());
+        y_str = to_string(arr_abs_Newt[i]);
+        View(y_str);
+        cout << endl;
+    }
+    cout << " --------------------------------------------------------------------------------------------- " << endl;
+    cout << "Погрешность метода Лагранжа: " << Find_Max(arr_abs_Lagr, n) << endl;
+    cout << "Погрешность метода Ньютона: " << Find_Max(arr_abs_Newt, n) << endl;
+    system("echo plot \"original\" with lines, \"interpolated_Lagr\" with lines, \"interpolated_Newton\" with lines | D:\\gnuplot\\bin\\gnuplot.exe --persist");
+    system("del original");
+    system("del interpolated_Lagr");
+    system("del interpolated_Newton");
+    delete[] arr_y;
+    delete[] arr_x;
+    delete[] arr_y_t;
+    delete[] arr_abs_Lagr;
+    delete[] arr_abs_Newt;
+}
+int main(){
+    setlocale(LC_ALL, "ru");
+    cout << "Default: a = -2, b = 2, m = 11" << endl;
+    Start();
+    while (1) {
+        cout << "Хотите ввести новые значения?\n1-ДА\telse-Заверить работу." << endl;
+        switch (_getch()) {
+            case '1':
+                Start();
+                break;
+            default:
+                return 0;
+        }
+    }
+    return 0;
+}
