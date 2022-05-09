@@ -1,0 +1,69 @@
+#include <iostream>
+#include <conio.h>
+
+using namespace std;
+
+double F(double x) {
+    return 4 * x - 7 * sin(x);
+}
+
+double Metod_Simpson(double (*f) (double x), double a, double b, int n){
+    double s = 0, h, x;
+    h = (b - a) / n;
+    x = a;
+    for (int i = 1; i <= n; i++) {
+        s += f(x) + 4 * f(x + h / 2) + f(x + h);
+        x += h;
+    }
+    return  s * h / 6;
+}
+double trapezoidalIntegral(double (*f) (double x), double a, double b, int n) {
+    const double width = (b - a) / n;
+    double trapezoidal_integral = 0;
+    for (int step = 0; step < n; step++) {
+        const double x1 = a + step * width;
+        const double x2 = a + (step + 1) * width;
+        trapezoidal_integral += 0.5 * (x2 - x1) * (f(x1) + f(x2));
+    }
+    return trapezoidal_integral;
+}
+int main()
+{
+    setlocale(LC_ALL, "ru");
+    double  a, b, eps, I1, I2;
+    int  n, n1;
+    cout << " If a = -2, b = 3, Int = 5,983" << endl;
+    do {
+        cout << " Input a: ";
+        cin >> a;
+        cout << "\n Input b: ";
+        cin >> b;
+        cout << " Input 1 – n,  Else – eps : " << endl;
+        switch (_getch()) {
+            case '1':
+                cout << "Input n : ";
+                cin >> n;
+                I1 = Metod_Simpson(F, a, b, n);
+                break;
+            default:
+                cout << " Input eps : ";
+                cin >> eps;
+                n1 = 2;
+                // Начальное число разбиений n1, интеграл – I1
+                I1 = Metod_Simpson(F, a, b, n1);
+                do {
+                    /* Увеличиваем число разбиений и находим новое значение интеграла  I2  */
+                    n1 *= 2;
+                    I2 = Metod_Simpson(F, a, b, n1);
+                    I1 = I2;
+                } while (fabs(I2 - I1) > eps);
+                cout << "\t n = " << n1 << endl;
+                /* Выводим количество разбиений n1, при кото-ром была достигнута заданная точность  */
+                break;
+        }
+        cout << "Integral = " << I1 << endl;
+        cout << "Repeat - 1, Else - EXIT " << endl;
+    } while (_getch() == '1');
+    return 0;
+}
+
