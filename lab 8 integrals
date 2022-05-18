@@ -3,16 +3,43 @@
 
 using namespace std;
 
+double input(const char* msg) {
+    double toReturn = 0;
+    cout << msg << " ";
+    while (!(cin >> toReturn) || cin.get() != '\n') {
+        cin.clear();
+        while (cin.get() != '\n');
+        cout << "\nBad input!\n Input again: ";
+    }
+    return toReturn;
+}
+double input_without_0(const char* msg) {
+    double toReturn = 0;
+    cout << msg << " ";
+    while (toReturn <= 0) {
+        while (!(cin >> toReturn) || cin.get() != '\n') {
+            cin.clear();
+            while (cin.get() != '\n');
+            cout << "\nBad input!\n Input again: ";
+        }
+        if (toReturn <= 0) {
+            cout << "\nValue should be more than 0!\nInput again: ";
+        }
+    }
+    return toReturn;
+}
+
 double F(double x) {
     return 4 * x - 7 * sin(x);
 }
 
 double Metod_Simpson(double (*f) (double x), double a, double b, int n){
-    double s = 0, h, x;
+    double s = 0, h, h2, x;
     h = (b - a) / n;
+    h2 = h / 2;
     x = a;
     for (int i = 1; i <= n; i++) {
-        s += f(x) + 4 * f(x + h / 2) + f(x + h);
+        s += f(x) + 4 * f(x + h2) + f(x + h);
         x += h;
     }
     return  s * h / 6;
@@ -20,48 +47,74 @@ double Metod_Simpson(double (*f) (double x), double a, double b, int n){
 double trapezoidalIntegral(double (*f) (double x), double a, double b, int n) {
     const double width = (b - a) / n;
     double trapezoidal_integral = 0;
-    for (int step = 0; step < n; step++) {
-        const double x1 = a + step * width;
-        const double x2 = a + (step + 1) * width;
+    /*for (int step = 0; step < n; step++) {
+        x1 = a + step * width;
+        x2 = a + (step + 1) * width;
         trapezoidal_integral += 0.5 * (x2 - x1) * (f(x1) + f(x2));
+    }*/
+    for (double x = a; x < b; x += width) {
+        trapezoidal_integral +=  (f(x) + f(x + width));
     }
-    return trapezoidal_integral;
+    return 0.5 * width * trapezoidal_integral;
 }
-int main()
-{
-    setlocale(LC_ALL, "ru");
-    double  a, b, eps, I1, I2;
+double Metod_Average(double (*f) (double x), double a, double b, int n) {
+    double s = 0, h, h2, x;
+    h = (b - a) / n;
+    h2 = h / 2;
+    x = a;
+    for (x = a + h2; x < b; x += h) {
+        s += f(x);
+    }
+    return  s * h;
+}
+double Eps(double Integ(double (*f) (double x), double a, double b, int n), double a, double b, double eps, int &n1) {
+    double I1, I2, pogr;
+    n1 = 2;
+    I1 = Integ(F, a, b, n1);
+    do {
+        n1 *= 2;
+        I2 = Integ(F, a, b, n1);
+        pogr = fabs(I2 - I1);
+        I1 = I2;
+    } while (pogr > eps);
+    return I1;
+}
+int main(){
+    double  a, b, eps, I1, I2, I3, pogr;
     int  n, n1;
     cout << " If a = -2, b = 3, Int = 5,983" << endl;
     do {
-        cout << " Input a: ";
-        cin >> a;
-        cout << "\n Input b: ";
-        cin >> b;
-        cout << " Input 1 – n,  Else – eps : " << endl;
+        a = input(" Input a: ");
+        b = input(" Input b: ");
+        cout << " Input:\n 1 - n,  Else - eps  " << endl;
         switch (_getch()) {
             case '1':
-                cout << "Input n : ";
-                cin >> n;
+                n = input_without_0(" Input n: ");
+                while (n < 10) {
+                    cout << "n should be more than 10!" << endl;
+                    n = input_without_0(" Input again: ");
+                }
+                I2 = trapezoidalIntegral(F, a, b, n);
                 I1 = Metod_Simpson(F, a, b, n);
+                I3 = Metod_Average(F, a, b, n);
+                cout << "Trapec = " << I2 << endl;
+                cout << "Simpson = " << I1 << endl;
+                cout << "Average = " << I3 << endl;
                 break;
             default:
-                cout << " Input eps : ";
-                cin >> eps;
-                n1 = 2;
-                // Начальное число разбиений n1, интеграл – I1
-                I1 = Metod_Simpson(F, a, b, n1);
-                do {
-                    /* Увеличиваем число разбиений и находим новое значение интеграла  I2  */
-                    n1 *= 2;
-                    I2 = Metod_Simpson(F, a, b, n1);
-                    I1 = I2;
-                } while (fabs(I2 - I1) > eps);
-                cout << "\t n = " << n1 << endl;
-                /* Выводим количество разбиений n1, при кото-ром была достигнута заданная точность  */
+                eps = input_without_0(" Input eps: ");
+                while (eps > 1) {
+                    cout << "eps should be more than 1! " << endl;
+                    eps = input_without_0("Input again: ");
+                }
+                I1 = Eps(trapezoidalIntegral, a, b, eps, n1);
+                cout << "Trapec = " << I1 << "  n = " << n1 << endl;
+                I2 = Eps(Metod_Simpson, a, b, eps, n1);
+                cout << "Simpson = " << I2 << "  n = " << n1 <<endl;
+                I3 = Eps(Metod_Average, a, b, eps, n1);
+                cout << "Average = " << I3 << "  n = " << n1 << endl;
                 break;
         }
-        cout << "Integral = " << I1 << endl;
         cout << "Repeat - 1, Else - EXIT " << endl;
     } while (_getch() == '1');
     return 0;
